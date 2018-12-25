@@ -43,3 +43,4 @@ uint8_t current_State = FSM_INIT;
         *string='\0';
 }
 
+

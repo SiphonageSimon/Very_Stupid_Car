@@ -27,9 +27,17 @@ typedef struct Tres                     //状态切换阈值结构体，仅仅是觉得大写看着
   uint8_t no_val;                       //无读数，默认为0
 }Threshold;
 
+//舵机相关阈值
+#define TURN_THRES 750
+#define ERROR_THRES 300
+#define ENABLE_THRES 1200
+#define INTEGRAL_MAX 30
 //速度相关
-#define SPD_GIVEN                       //给定车速
-#define SPD_GOAL                        //终点车速
+#define BB_DUTY_MAX 9000                //bangbang1
+#define BB_DUTY_MAX 0                   //bangbang0
+#define BB_DEAD_ZONE 20                 //bangbang死区
+#define SPD_GOAL 0                      //终点车速
+#define BANGBANG_ENABLE 0               //是否使用bangbang控制
 //模糊相关参数
 #define NB -1000
 #define NM -400
@@ -46,4 +54,6 @@ void servo_Ctrl(void);
 void FSM_select(void);
 void fuzzy_Ctrl(void);
 void simple_Ctrl(void);
+int16_t get_integral(void);
+void input_integral(void);
 

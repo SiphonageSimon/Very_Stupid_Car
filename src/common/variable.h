@@ -5,14 +5,14 @@
 #define STATE_VAL_DISPLY    1            //main中是否显示电感读数和当前状态
 #define SCOPE_SEND          1            //main中是否发送虚拟示波器值
 #define ADC_VAL_DSPLY       0            //isr1中是否显示电感数值
-#define LINEAR_TEST         0            //FSM_Ctrl中是否进入提线线性化测试
+#define LINEAR_TEST         1            //FSM_Ctrl中是否进入提线线性化测试
 
 
 //adc采集参数
 #define AD_BUFFER 20                     //惯性滤波器长度
 #define AD_AVETIME 10                    //均值采样次数
 #define AD_VALUE_1 1000                  //归一化精度
-#define AD_ALPHA 0.8                     //惯性滤波权重
+#define AD_ALPHA 0.6                     //惯性滤波权重
 
 //adc通道选择
 #define ADC0 ADC_CHANNEL_AD4             //PTB0
