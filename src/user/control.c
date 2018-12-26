@@ -5,17 +5,81 @@ float kd[3] = {0.02, 0.05, 0.1};
 float ki[3] = {0.001, 0.005, 0.1};
 int16_t integral_error[INTEGRAL_MAX] = {0};//偏差积分数组
 int16_t i_error = 0; //偏差积分
+int16_t d_error = 0; //偏差微分
 int16_t last_error = 0; //上一次偏差值
 int16_t error = 0;      //提线偏差值
 int16_t error_differ;  //微分值
 int16_t newDuty;       //最终输出占空比
+float speed = 7000;//车速
+float k_speed=0.9;
 uint16_t left_Spd = 0;
 uint16_t right_Spd = 0; //左右速度
 int Spd_Offset = 0;     //差速
 int16_t leftVal, midVal, rightVal,leftVerVal,rightVerVal;
 Threshold threshold;
 
-void simple_Ctrl(void)//长者的智慧，带阈值的控制
+/*瞎写着试试*/
+void wu_Ctrl(void)
+{ 
+  static uint8_t flag_turn = 0;
+ // int16_t LRjudge = leftVal - rightVal;
+  //0为正常，1为左电感值达到阈值，2为右电感值达到阈值
+  leftVal = adc_fine[AD_LEFT];
+  midVal = adc_fine[AD_MID];
+  rightVal = adc_fine[AD_RIGHT];
+  leftVerVal = adc_fine[AD_LEFT_VERTICAL];
+  rightVerVal = adc_fine[AD_RIGHT_VERTICAL];
+  d_error=error-last_error;
+  last_error = error;
+  i_error = get_integral();
+  newDuty = SteerMid; //回中
+  FSM_select();
+  //getkp
+  float kp_error;
+  if(midVal > 1000)
+    kp_error =  0.2;
+  else
+  {
+    kp_error = (1000 - midVal) / 850.0;
+  }
+  error = (leftVal - rightVal) * kp_error+kd[2]*d_error;
+  if(error>TURN_MAX)
+    error=TURN_MAX;
+  else if(error<-TURN_MAX)
+    error=-TURN_MAX;
+  k_speed=1-error/TURN_MAX;
+  /*if(error > TURN_MAX)
+  {
+    error = TURN_MAX;
+    motor_Ctrl(0.7*speed,0);
+  }
+  else if(error < - TURN_MAX)
+  {
+    error = -TURN_MAX;
+    motor_Ctrl(0,0.7*speed);
+  }
+  
+  else
+    motor_Ctrl(speed,speed);*/
+  
+  input_integral();
+  newDuty = newDuty + error ;
+  FTM_PWM_Duty(CFTM1, FTM_CH1, newDuty);
+  //motor_Ctrl(7000,7000);
+  
+#if LINEAR_TEST
+
+  if(error < 0)
+    GetData(-error,0,0,0,OutData);
+  else
+    GetData(error,0,0,0,OutData);
+ 
+#endif
+  return;
+}
+
+/*长者的智慧，带阈值的控制*/
+void simple_Ctrl(void)
 {
   static uint8_t flag_turn = 0;
  // int16_t LRjudge = leftVal - rightVal;
@@ -137,7 +201,9 @@ void simple_Ctrl(void)//长者的智慧，带阈值的控制
   return;
   
 }
-void FSM_select(void)//有限状态机跳转
+
+/*有限状态机跳转*/
+void FSM_select(void)
 {
   switch (current_State)
   {
@@ -148,51 +214,69 @@ void FSM_select(void)//有限状态机跳转
     threshold.enter_sturn = 400;
     threshold.no_val = 10;
     current_State = FSM_STRAIGHT;
+    motor_Ctrl(speed,speed);
     break;
+    
   case FSM_STRAIGHT:
     if(leftVerVal > threshold.enter_crossroad && rightVerVal > threshold.enter_crossroad)
-     current_State = FSM_STRAIGHT; //FSM_CROSSROAD;
+    { current_State = FSM_STRAIGHT; //FSM_CROSSROAD;
+     motor_Ctrl(speed,speed);}
     if(leftVerVal > threshold.enter_corner && rightVerVal < threshold.enter_straight && leftVal > threshold.enter_corner)
-      current_State = FSM_LEFT_CORNER;
+    { current_State = FSM_LEFT_CORNER;
+      motor_Ctrl(k_speed*speed,speed);}
     else if(leftVerVal < threshold.enter_straight && rightVerVal > threshold.enter_corner && rightVal > threshold.enter_corner)
-      current_State = FSM_RIGHT_CORNER;
+    {  current_State = FSM_RIGHT_CORNER;
+       motor_Ctrl(speed,k_speed*speed);}
     break;
+    
   case FSM_LEFT_CORNER:
     if(leftVerVal > threshold.enter_crossroad && rightVerVal > threshold.enter_crossroad)
-     current_State = FSM_STRAIGHT;
+    {current_State = FSM_STRAIGHT;
+     motor_Ctrl(speed,speed);}
     else if((leftVerVal < threshold.enter_straight && rightVerVal < threshold.enter_straight) && (midVal > rightVal && midVal > leftVal))
-      current_State = FSM_STRAIGHT;
+    {current_State = FSM_STRAIGHT;
+    motor_Ctrl(speed,speed);}
     else if(rightVerVal > threshold.enter_sturn && leftVerVal < threshold.no_val  && rightVal > threshold.enter_corner)
-      current_State = FSM_RIGHT_CORNER;
+    { current_State = FSM_RIGHT_CORNER;
+      motor_Ctrl(speed,k_speed*speed);
+    }
   //  else if(leftVerVal < threshold.enter_corner && rightVerVal > threshold.enter_corner)
     //  current_State = FSM_S_TURN;
    // else if(leftVerVal > threshold.enter_crossroad && rightVerVal > threshold.enter_crossroad)
    //   current_State = FSM_STRAIGHT; //FSM_CROSSROAD;
     break;
+    
   case FSM_RIGHT_CORNER:
     if(leftVerVal > threshold.enter_crossroad && rightVerVal > threshold.enter_crossroad)
-     current_State = FSM_STRAIGHT;
+    {current_State = FSM_STRAIGHT;
+     motor_Ctrl(speed,speed);}
     else if((leftVerVal < threshold.enter_straight && rightVerVal < threshold.enter_straight) && (midVal > leftVal && midVal > rightVal))
-      current_State = FSM_STRAIGHT;
+    {current_State = FSM_STRAIGHT;
+     motor_Ctrl(speed,speed);}
     else if(leftVerVal > threshold.enter_sturn && rightVerVal < threshold.no_val && leftVal > threshold.enter_corner)
-      current_State = FSM_LEFT_CORNER;
+    {current_State = FSM_LEFT_CORNER;
+     motor_Ctrl(k_speed*speed,speed);}
    // else if(leftVerVal > threshold.enter_corner && rightVerVal < threshold.enter_corner)
      // current_State = FSM_S_TURN;
    // else if(leftVerVal > threshold.enter_crossroad && rightVerVal > threshold.enter_crossroad)
    //   current_State = FSM_STRAIGHT; //FSM_CROSSROAD;
     break;
+    
   case FSM_S_TURN:
     if((leftVerVal < threshold.enter_straight && rightVerVal < threshold.enter_straight))
       current_State = FSM_STRAIGHT;
     break;
+    
   case FSM_CROSSROAD:
     if(leftVerVal > threshold.enter_corner && rightVerVal < threshold.enter_corner)
       current_State = FSM_LEFT_CORNER;
     else if(leftVerVal < threshold.enter_corner && rightVerVal > threshold.enter_corner)
       current_State = FSM_RIGHT_CORNER;
     break;
+    
   case FSM_OUT_OF_COURSE:
     break;
+    
   default:
     break;    
   }
