@@ -106,6 +106,7 @@ UART2_TX        I0
 
 
 #include "include.h"
+//uint16_t leftSpd,rightSpd;
 //编译相关宏定义在valuable.h
 void main(void)
 {
@@ -115,6 +116,7 @@ void main(void)
   adc_init();
   motor_init();
   servo_init();
+  encoder_init();
   OLED_Init();//OLED initialization
   OLED_BufferClear();//set black screen after OLED initialization
   OLED_BufferFlashAll();//flash screen, clear power-off frags
@@ -136,12 +138,6 @@ void main(void)
   
   while(1)
   { 
-    //OLED_BufferFill();
-    //OLED_BufferFlash();
-    //time_delay_ms(30);
-    //OLED_BufferClear();
-    //OLED_BufferFlash();
-    //time_delay_ms(30);
 #if STATE_VAL_DISPLY
     OLED_BufferClear();
     itoa(adc_fine[0], string2_0);
@@ -177,12 +173,24 @@ void main(void)
       OLED_DrawString8X16(30+OLED_DRAW_WIDTH_MAX/2,0,"XRD",OLED_COLOR_WHITE,OLED_FALSE,OLED_ANGLE_0,OLED_FALSE);
     OLED_BufferFlash();
 #endif
+#if TEST_ENCODER
+     itoa(get_left_spd(), string2_0);
+     itoa(get_right_spd(), string2_1);
+     OLED_BufferClear();
+     OLED_DrawString8X16(0,42,"L:",OLED_COLOR_WHITE,OLED_FALSE,OLED_ANGLE_0,OLED_FALSE);
+     OLED_DrawString8X16(30,42,string2_0,OLED_COLOR_WHITE,OLED_FALSE,OLED_ANGLE_0,OLED_FALSE);
+     OLED_DrawString8X16(0,0,"R:",OLED_COLOR_WHITE,OLED_FALSE,OLED_ANGLE_0,OLED_FALSE);
+     OLED_DrawString8X16(30,0,string2_1,OLED_COLOR_WHITE,OLED_FALSE,OLED_ANGLE_0,OLED_FALSE);
+     OLED_BufferFlash();
+#endif
 #if SCOPE_SEND
     if(!LINEAR_TEST)
-      GetData(adc_fine[0],adc_fine[1],adc_fine[3],30,OutData);
+      GetData(get_left_spd(),get_right_spd(),0,30,OutData);
     OutPut_Data(OutData);
     Data_Send(UARTR2,OutData);
     flag_received = 0;
 #endif
+    //leftSpd = get_left_spd();
+    //rightSpd = get_right_spd();
   } 
 }

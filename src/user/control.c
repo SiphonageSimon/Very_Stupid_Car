@@ -13,6 +13,8 @@ uint16_t left_Spd = 0;
 uint16_t right_Spd = 0; //左右速度
 int Spd_Offset = 0;     //差速
 int16_t leftVal, midVal, rightVal,leftVerVal,rightVerVal;
+uint16_t left_times = 0; //左编码器读数
+uint16_t right_times = 0; //右编码器读数
 Threshold threshold;
 
 void simple_Ctrl(void)//长者的智慧，带阈值的控制
@@ -35,9 +37,10 @@ void simple_Ctrl(void)//长者的智慧，带阈值的控制
     kp_error =  0.2;
   else
   {
-    kp_error = (1000 - midVal) / 850.0;
+    kp_error = (1000 - midVal) / 870.0;
   }
   error = (leftVal - rightVal) * kp_error;
+  //error = sqrt_get_error();
   /*
   switch(current_State)
   {
@@ -111,12 +114,12 @@ void simple_Ctrl(void)//长者的智慧，带阈值的控制
   if(error > TURN_MAX)
   {
     error = TURN_MAX;
-    motor_Ctrl(6700,0);
+    motor_Ctrl(6700,6500);
   }
   else if(error < - TURN_MAX)
   {
     error = -TURN_MAX;
-    motor_Ctrl(0,6700);
+    motor_Ctrl(6500,6700);
   }
   else
     motor_Ctrl(6700,6700);
@@ -129,13 +132,33 @@ void simple_Ctrl(void)//长者的智慧，带阈值的控制
 #if LINEAR_TEST
 
   if(error < 0)
-    GetData(-error,0,0,0,OutData);
+    GetData(-error,kp_error * 1000,0,0,OutData);
   else
-    GetData(error,0,0,0,OutData);
+    GetData(error,kp_error * 1000,0,0,OutData);
  
 #endif
   return;
   
+}
+
+int16_t sqrt_get_error(void)
+{
+  int16_t outputVal;
+  double tempVal, tempLeftVal, tempRightVal;
+  if(leftVal == rightVal)
+  {
+    return 0;
+  }
+  else
+  {
+    tempLeftVal = leftVal;
+    tempRightVal = rightVal;
+    tempVal = (sqrt(tempLeftVal) -sqrt(tempRightVal)) / (tempLeftVal - tempRightVal) * 5000.0 - 150;
+    outputVal = tempVal;
+    if(leftVal < rightVal)
+      outputVal = -outputVal;
+  }
+  return outputVal;
 }
 void FSM_select(void)//有限状态机跳转
 {
@@ -411,6 +434,14 @@ void fuzzy_Control(void)
   
 }
 
+void get_spd(void)
+{
+  left_times = FTM_count_get(CFTM0);
+  right_times = FTM_count_get(CFTM1);
+  FTM_count_clean(CFTM0);
+  FTM_count_clean(CFTM1);
+  return;
+}
 void input_integral(void)
 {
   static uint8_t position = 0;
@@ -420,6 +451,7 @@ void input_integral(void)
      position = 0;
   return;
 }
+
 
 int16_t get_integral(void)
 {
@@ -445,4 +477,14 @@ uint16_t getNewDutyVal(void)
 uint8_t getCurrentState(void)
 {
   return current_State;
+}
+
+uint8_t get_left_spd(void)
+{
+  return left_times;
+}
+
+uint8_t get_right_spd(void)
+{
+  return right_times;
 }

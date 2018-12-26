@@ -36,3 +36,9 @@ void servo_init(void)
 {
     FTM_PWM_init(CFTM1, FTM_CH1,FTM_PTC5, 100, SteerMid);
 }
+
+void encoder_init(void)
+{
+  FTM_count_init(CFTM0); //E0
+  FTM_count_init(CFTM1); //E7
+}

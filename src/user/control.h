@@ -56,4 +56,8 @@ void fuzzy_Ctrl(void);
 void simple_Ctrl(void);
 int16_t get_integral(void);
 void input_integral(void);
+int16_t sqrt_get_error(void);
+void get_spd(void);
+uint8_t get_left_spd(void);
+uint8_t get_right_spd(void);
 

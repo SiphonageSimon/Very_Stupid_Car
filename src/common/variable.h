@@ -2,10 +2,12 @@
 
 //编译相关宏
 #define INIT_DSPLY          1            //main中是否显示初始化提示语
-#define STATE_VAL_DISPLY    1            //main中是否显示电感读数和当前状态
+#define STATE_VAL_DISPLY    0            //main中是否显示电感读数和当前状态
 #define SCOPE_SEND          1            //main中是否发送虚拟示波器值
+#define TEST_ENCODER        1            //main中是否显示编码器测试值
 #define ADC_VAL_DSPLY       0            //isr1中是否显示电感数值
-#define LINEAR_TEST         1            //FSM_Ctrl中是否进入提线线性化测试
+#define LINEAR_TEST         0            //FSM_Ctrl中是否进入提线线性化测试
+
 
 
 //adc采集参数

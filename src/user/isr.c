@@ -90,7 +90,8 @@ void PIT1_ISR(void)
     //控制方法二选一
     //*/
     //FSM_Ctrl();   //优雅，高级但是没写完
-    simple_Ctrl();
+    //simple_Ctrl();
+    get_spd();
     /*/
     servo_Ctrl(); //舵机控制，包含提线
     //*/
