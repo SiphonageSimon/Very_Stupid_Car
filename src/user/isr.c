@@ -52,7 +52,8 @@ void PIT0_ISR(void)
 {
     DisableInterrupts;                          //关总中断
     PIT->CHANNEL[0].TFLG |= PIT_TFLG_TIF_MASK;//清除中断标志位  
-    read_AD(); //读取adc值并滤波和归一化
+    //read_AD(); //读取adc值并滤波和归一化
+    //get_spd();
     EnableInterrupts;            //开总中断
   
 }
@@ -90,8 +91,8 @@ void PIT1_ISR(void)
     //控制方法二选一
     //*/
     //FSM_Ctrl();   //优雅，高级但是没写完
-    //simple_Ctrl();
     get_spd();
+    simple_Ctrl();
     /*/
     servo_Ctrl(); //舵机控制，包含提线
     //*/
@@ -108,8 +109,11 @@ void KBI0_Isr(void)
   if(KBI0->SP &(1<<n))
   {
     //用户代码 
-    LED_Ctrl(LED0, LEDRVS);             
+    //left_Counter++;
+    //LED_Ctrl(LED0, LEDRVS);             
   } 
+  left_Counter++;
+    
 }
 
 //KBI1中断函数
@@ -121,8 +125,9 @@ void KBI1_Isr(void)
   if(KBI1->SP &(1<<n))
   {
     //用户代码 
-    LED_Ctrl(LED1, LEDRVS);             
+    //LED_Ctrl(LED1, LEDRVS);             
   }
+  //right_Counter++;
 }
 
 

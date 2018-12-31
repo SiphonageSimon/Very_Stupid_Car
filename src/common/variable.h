@@ -2,11 +2,11 @@
 
 //编译相关宏
 #define INIT_DSPLY          1            //main中是否显示初始化提示语
-#define STATE_VAL_DISPLY    0            //main中是否显示电感读数和当前状态
+#define STATE_VAL_DISPLY    1            //main中是否显示电感读数和当前状态
 #define SCOPE_SEND          1            //main中是否发送虚拟示波器值
-#define TEST_ENCODER        1            //main中是否显示编码器测试值
+#define TEST_ENCODER        0            //main中是否显示编码器测试值
 #define ADC_VAL_DSPLY       0            //isr1中是否显示电感数值
-#define LINEAR_TEST         0            //FSM_Ctrl中是否进入提线线性化测试
+#define LINEAR_TEST         1            //Ctrl中是否进入提线线性化测试
 
 
 
@@ -43,6 +43,9 @@ extern uint8_t  adc_res_pos;            //内部变量，请勿在adc.c以外修改数组值
 extern uint16_t adc_fine[6];            //归一化和惯性滤波后的值，提线使用，请勿在adc.c以外修改数组值
 extern uint8_t flag_received;           //uart接受指示位
 extern unsigned short OutData[4];     //虚拟示波器输出数值
+extern uint16_t left_Counter;
+extern uint16_t right_Counter;
+extern uint8_t testVal;
 
 //OLED显示内容
 extern  unsigned char string0[];

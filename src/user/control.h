@@ -33,11 +33,12 @@ typedef struct Tres                     //状态切换阈值结构体，仅仅是觉得大写看着
 #define ENABLE_THRES 1200
 #define INTEGRAL_MAX 30
 //速度相关
-#define BB_DUTY_MAX 9000                //bangbang1
-#define BB_DUTY_MAX 0                   //bangbang0
-#define BB_DEAD_ZONE 20                 //bangbang死区
+#define BB_BREAK_MAX 5000               //反转
+#define BB_DUTY_MAX 7600                //bangbang1
+#define BB_DUTY_MIN 0                   //bangbang0
+#define BB_DEAD_ZONE 2                 //bangbang死区
 #define SPD_GOAL 0                      //终点车速
-#define BANGBANG_ENABLE 0               //是否使用bangbang控制
+#define BANGBANG_ENABLE 1               //是否使用bangbang控制
 //模糊相关参数
 #define NB -1000
 #define NM -400

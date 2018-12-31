@@ -16,125 +16,81 @@ int16_t leftVal, midVal, rightVal,leftVerVal,rightVerVal;
 uint16_t left_times = 0; //左编码器读数
 uint16_t right_times = 0; //右编码器读数
 Threshold threshold;
+///test
 
 void simple_Ctrl(void)//长者的智慧，带阈值的控制
 {
-  static uint8_t flag_turn = 0;
- // int16_t LRjudge = leftVal - rightVal;
-  //0为正常，1为左电感值达到阈值，2为右电感值达到阈值
+  int16_t ifout;
   leftVal = adc_fine[AD_LEFT];
   midVal = adc_fine[AD_MID];
   rightVal = adc_fine[AD_RIGHT];
   leftVerVal = adc_fine[AD_LEFT_VERTICAL];
   rightVerVal = adc_fine[AD_RIGHT_VERTICAL];
   last_error = error;
-  i_error = get_integral();
+  //i_error = get_integral();
   newDuty = SteerMid; //回中
   FSM_select();
-  //getkp
   float kp_error;
   if(midVal > 1000)
     kp_error =  0.2;
   else
   {
-    kp_error = (1000 - midVal) / 870.0;
+    kp_error = (1000 - midVal) * 0.00076;
   }
-  error = (leftVal - rightVal) * kp_error;
-  //error = sqrt_get_error();
-  /*
-  switch(current_State)
+  error = leftVal - rightVal;
+  error_differ = error - last_error;
+  last_error = error;
+  error = error * kp_error + (leftVerVal - rightVerVal) * 0.005 - error_differ * 0.014;
+  //error = error * kp_error - error_differ * 0.012;
+  //ifout = sqrt_get_error();
+  //testVal = ifout;
+  if( midVal < 160 && leftVal > rightVal)
   {
-  case FSM_STRAIGHT:
-    Kp = kp[0];
-    Ki = ki[2];
-    break;
-  case FSM_LEFT_CORNER:
-  case FSM_RIGHT_CORNER:
-    Kp = kp_error;//kp[3];
-    Ki = ki[0];
-    break;
-  default:
-    Kp = kp_error;//kp[3];
-    Ki = ki[1];
-    break;
-  }
-  newDuty = SteerMid; //回中
-  if(flag_turn == 0)
-  {
-    if(leftVal > midVal && leftVal > rightVal && leftVal < ERROR_THRES)
-    {
-      flag_turn = 1;
-    }
-    else if(rightVal > midVal && leftVal < rightVal && rightVal < ERROR_THRES)
-    {
-      flag_turn = 2;
-    }
-    if(leftVal > midVal && leftVal > TURN_THRES && midVal < ENABLE_THRES && leftVal - rightVal > ERROR_THRES)
-    {
-      flag_turn = 1;  
-    }
-    if(rightVal > midVal && rightVal > TURN_THRES && midVal < ENABLE_THRES && rightVal - leftVal> ERROR_THRES)
-    {
-      flag_turn = 2;  
-    }
-  }
-  if(flag_turn == 0)
-  {
-    error = leftVal - rightVal;
-    error *= Kp;
-  }
-  else if(flag_turn == 1)
-  {
-    if(leftVal < midVal && rightVal < midVal)
-    {
-      flag_turn = 0;
-      error = leftVal - rightVal;
-      error *= Kp;
-    }
-  }
-  else if(flag_turn == 2)
-  {
-    if(leftVal < midVal && rightVal < midVal)
-    {
-      flag_turn = 0;
-      error = leftVal - rightVal;
-      error *= Kp;
-    }
-  }
- 
-  //error += i_error * Ki;
-  if(current_State == FSM_LEFT_CORNER && leftVal < 300)
     error = TURN_MAX;
-  if(current_State == FSM_RIGHT_CORNER && rightVal < 300)
+  }
+  else if( midVal < 160 && leftVal < rightVal)
+  {
     error = -TURN_MAX;
-  */
- // if(-5 < error - last_error && error - last_error < 5) //最小死区
-   // error = last_error;
-  
+  }
   if(error > TURN_MAX)
   {
     error = TURN_MAX;
-    motor_Ctrl(6700,6500);
   }
   else if(error < - TURN_MAX)
   {
     error = -TURN_MAX;
-    motor_Ctrl(6500,6700);
   }
-  else
-    motor_Ctrl(6700,6700);
   
-  input_integral();
   newDuty = newDuty + error ;
   FTM_PWM_Duty(CFTM1, FTM_CH1, newDuty);
-  //motor_Ctrl(7000,7000);
-  
+  if(gpio_get(PTE6) == 0)
+    motor_Ctrl(17,17); //擦赛道
+  else
+  {
+    if(error == TURN_MAX) //跑赛道
+    {
+      motor_Ctrl(21,16);
+    }
+    else if(error == - TURN_MAX)
+    {
+      motor_Ctrl(16,21);
+    }
+    else if(leftVerVal <= 5 && rightVerVal <= 5)
+    {
+      motor_Ctrl(28,28);
+    }
+    else
+    {
+      motor_Ctrl(21,21);
+    }
+  }
+
 #if LINEAR_TEST
 
-  if(error < 0)
-    GetData(-error,kp_error * 1000,0,0,OutData);
-  else
-    GetData(error,kp_error * 1000,0,0,OutData);
+  //if(error < 0)
+    //GetData(-error,rightVal-leftVal,0,0,OutData);
+ // else
+    GetData(error,leftVal-rightVal,error_differ,0,OutData);
  
 #endif
   return;
@@ -153,7 +109,7 @@ int16_t sqrt_get_error(void)
   {
     tempLeftVal = leftVal;
     tempRightVal = rightVal;
-    tempVal = (sqrt(tempLeftVal) -sqrt(tempRightVal)) / (tempLeftVal - tempRightVal) * 5000.0 - 150;
+    tempVal = (sqrt(tempLeftVal) -sqrt(tempRightVal)) / (tempLeftVal - tempRightVal) * 1000;
     outputVal = tempVal;
     if(leftVal < rightVal)
       outputVal = -outputVal;
@@ -326,7 +282,7 @@ void FSM_Ctrl(void)
     newDuty = SteerMid - TURN_MAX;
   FTM_PWM_Duty(CFTM1, FTM_CH1, newDuty);
   
-  motor_Ctrl(6700,6700);
+  motor_Ctrl(20,20);
   return;
 }
 
@@ -335,18 +291,25 @@ void motor_Ctrl(uint16_t left_Spd_Set, uint16_t right_Spd_Set)
 {
   if(leftVal==0 && midVal==0 && rightVal==0)
   {
-    left_Spd_Set = 0;
-    right_Spd_Set = 0;
+    FTM_PWM_Duty(CFTM2, FTM_CH3, 0);   //PWM2 PTB3
+    FTM_PWM_Duty(CFTM2, FTM_CH4, 0);  //PWM2 PTB2   
+    return;
   }
 #if BANGBANG_ENABLE
-  if(left_Spd < left_Spd_Set - BB_DEAD_ZONE)
+  if(left_Spd_Set <= BB_DEAD_ZONE)
+    FTM_PWM_Duty(CFTM2, FTM_CH3, BB_DUTY_MIN);
+  else if(left_times < left_Spd_Set - BB_DEAD_ZONE)
      FTM_PWM_Duty(CFTM2, FTM_CH3, BB_DUTY_MAX);
-  else if(left_Spd > left_Spd_Set + BB_DEAD_ZONE)
+  else if(left_times > left_Spd_Set + BB_DEAD_ZONE)
      FTM_PWM_Duty(CFTM2, FTM_CH3, BB_DUTY_MIN);
-  if(right_Spd < right_Spd_Set - BB_DEAD_ZONE)
-     FTM_PWM_Duty(CFTM2, FTM_CH4, BB_DUTY_MAX);
-  else if(right_Spd > right_Spd_Set + BB_DEAD_ZONE)
+  
+  if(right_Spd_Set <= BB_DEAD_ZONE)
      FTM_PWM_Duty(CFTM2, FTM_CH4, BB_DUTY_MIN);
+  else if(right_times < right_Spd_Set - BB_DEAD_ZONE)
+     FTM_PWM_Duty(CFTM2, FTM_CH4, BB_DUTY_MAX);
+  else if(right_times > right_Spd_Set + BB_DEAD_ZONE)
+     FTM_PWM_Duty(CFTM2, FTM_CH4, BB_DUTY_MIN);
+  
 #else
   FTM_PWM_Duty(CFTM2, FTM_CH3, left_Spd_Set);   //PWM2 PTB3
   FTM_PWM_Duty(CFTM2, FTM_CH4, right_Spd_Set);  //PWM2 PTB2   
@@ -436,10 +399,10 @@ void fuzzy_Control(void)
 
 void get_spd(void)
 {
-  left_times = FTM_count_get(CFTM0);
-  right_times = FTM_count_get(CFTM1);
+  left_times =left_Counter;
+  left_Counter = 0;
+  right_times =FTM_count_get(CFTM0);
   FTM_count_clean(CFTM0);
-  FTM_count_clean(CFTM1);
   return;
 }
 void input_integral(void)

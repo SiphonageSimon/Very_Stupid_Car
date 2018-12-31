@@ -106,7 +106,7 @@ UART2_TX        I0
 
 
 #include "include.h"
-//uint16_t leftSpd,rightSpd;
+uint16_t leftSpd,rightSpd;
 //编译相关宏定义在valuable.h
 void main(void)
 {
@@ -116,7 +116,6 @@ void main(void)
   adc_init();
   motor_init();
   servo_init();
-  encoder_init();
   OLED_Init();//OLED initialization
   OLED_BufferClear();//set black screen after OLED initialization
   OLED_BufferFlashAll();//flash screen, clear power-off frags
@@ -127,10 +126,11 @@ void main(void)
 #endif
   FTM_PWM_Duty(CFTM1, FTM_CH1, SteerMid);
   AD_value_init(); 
+  encoder_init();
 #if SCOPE_SEND
   uart_init (UARTR2,0, 115200);//uart init TX D7 RX D6
 #endif
-  //PIT_Init(PIT_CHANNEL0,2); //init isr0
+  //PIT_Init(PIT_CHANNEL0,4); //init isr0
   PIT_Init(PIT_CHANNEL1,2); //init isr1
   //RTC_Init(RTC_LPOCLK, 1);
   
@@ -190,7 +190,7 @@ void main(void)
     Data_Send(UARTR2,OutData);
     flag_received = 0;
 #endif
-    //leftSpd = get_left_spd();
-    //rightSpd = get_right_spd();
+    leftSpd = get_left_spd();
+    rightSpd = get_right_spd();
   } 
 }

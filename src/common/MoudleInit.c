@@ -4,9 +4,9 @@
 void key_init(void)
 {
     gpio_init(PTE6,0 ,0);       //���ڹ�һ��
-    gpio_init(PTI5,0 ,0);
-    gpio_init(PTI4,0 ,0);
-    gpio_init(PTE4,0 ,0);
+   // gpio_init(PTI5,0 ,0);
+   // gpio_init(PTI4,0 ,0);
+   // gpio_init(PTE4,0 ,0);
 }
 
 /*��д�����AD��ʼ��*/
@@ -39,6 +39,7 @@ void servo_init(void)
 
 void encoder_init(void)
 {
+  KBI_Init(KBIX0, KBI_PTA0,  KBI_FALLING_LOW); //A0
   FTM_count_init(CFTM0); //E0
-  FTM_count_init(CFTM1); //E7
+  //FTM_count_init(CFTM1); //E7
 }

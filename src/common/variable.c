@@ -6,7 +6,9 @@ uint16_t adc_fine[6] = {0};             //惯性滤波后的输出结果
 unsigned short OutData[4] = {0};
 uint8_t flag_received = 0;
 uint8_t current_State = FSM_INIT;
-
+uint16_t left_Counter = 0;
+uint16_t right_Counter = 0;
+uint8_t testVal = 0;
 //oled显示字符串
   unsigned char string0[] = "Initializing...";
   unsigned char string0_1[] = "Using Pin E6";
