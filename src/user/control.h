@@ -33,7 +33,7 @@ typedef struct Tres                     //状态切换阈值结构体，仅仅是觉得大写看着
 #define ENABLE_THRES 1200
 #define INTEGRAL_MAX 30
 //速度相关
-#define BB_BREAK_MAX 5000               //反转
+#define BB_BRAKE_MAX 8000               //反转
 #define BB_DUTY_MAX 7600                //bangbang1
 #define BB_DUTY_MIN 0                   //bangbang0
 #define BB_DEAD_ZONE 2                 //bangbang死区
@@ -55,6 +55,7 @@ void servo_Ctrl(void);
 void FSM_select(void);
 void fuzzy_Ctrl(void);
 void simple_Ctrl(void);
+void simple_Ctrl2(void);
 int16_t get_integral(void);
 void input_integral(void);
 int16_t sqrt_get_error(void);

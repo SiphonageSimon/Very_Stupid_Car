@@ -17,6 +17,81 @@ uint16_t left_times = 0; //左编码器读数
 uint16_t right_times = 0; //右编码器读数
 Threshold threshold;
 ///test
+void simple_Ctrl2(void)//长者的智慧，带阈值的控制
+{
+int16_t ifout;
+  leftVal = adc_fine[AD_LEFT];
+  midVal = adc_fine[AD_MID];
+  rightVal = adc_fine[AD_RIGHT];
+  leftVerVal = adc_fine[AD_LEFT_VERTICAL];
+  rightVerVal = adc_fine[AD_RIGHT_VERTICAL];
+  last_error = error;
+  //i_error = get_integral();
+  newDuty = SteerMid; //回中
+  FSM_select();
+  float kp_error;
+  if(midVal > 1200)
+    kp_error =  0.2;
+  else
+  {
+    kp_error = (1200 - midVal) * 0.0005;
+  }
+  error = leftVal - rightVal;
+  error_differ = error - last_error;
+  last_error = error;
+  error = error * kp_error + (leftVerVal - rightVerVal) * 0.015 - error_differ * 0.014;
+  if( midVal < 160 && leftVal > rightVal)
+  {
+    error = TURN_MAX;
+  }
+  else if( midVal < 160 && leftVal < rightVal)
+  {
+    error = -TURN_MAX;
+  }
+  if(error > TURN_MAX)
+  {
+    error = TURN_MAX;
+  }
+  else if(error < - TURN_MAX)
+  {
+    error = -TURN_MAX;
+  }
+  
+  newDuty = newDuty + error ;
+  FTM_PWM_Duty(CFTM1, FTM_CH1, newDuty);
+  if(gpio_get(PTE6) == 0)
+    motor_Ctrl(17,17); //擦赛道
+  else
+  {
+    if(error == TURN_MAX) //跑赛道
+    {
+      motor_Ctrl(18,17);
+    }
+    else if(error == - TURN_MAX)
+    {
+      motor_Ctrl(17,18);
+    }
+    else if(leftVerVal <= 5 && rightVerVal <= 5)
+    {
+      motor_Ctrl(20,20);
+    }
+    else
+    {
+      motor_Ctrl(18,18);
+    }
+  }
+
+#if LINEAR_TEST
+
+  //if(error < 0)
+    //GetData(-error,rightVal-leftVal,0,0,OutData);
+ // else
+    GetData(error,leftVal-rightVal,error_differ,0,OutData);
+ 
+#endif
+  return;
+    
+}
 
 void simple_Ctrl(void)//长者的智慧，带阈值的控制
 {
@@ -289,13 +364,32 @@ void FSM_Ctrl(void)
 //速度闭环函数，目前用作单纯速度给定
 void motor_Ctrl(uint16_t left_Spd_Set, uint16_t right_Spd_Set)
 {
+  static uint8_t if_brake = 0;
+  if(if_brake == 2)
+    return;
   if(leftVal==0 && midVal==0 && rightVal==0)
   {
-    FTM_PWM_Duty(CFTM2, FTM_CH3, 0);   //PWM2 PTB3
-    FTM_PWM_Duty(CFTM2, FTM_CH4, 0);  //PWM2 PTB2   
-    return;
+    if_brake = 1;
+
+    if(left_times < BB_DEAD_ZONE || right_times < BB_DEAD_ZONE)
+    {
+      FTM_PWM_Duty(CFTM2, FTM_CH3, 0);   //PWM2 PTB3
+      FTM_PWM_Duty(CFTM2, FTM_CH4, 0);  //PWM2 PTB2   
+      if_brake = 2;
+      return;
+    }
+  }
+  else
+  {
+    if_brake = 0;
   }
 #if BANGBANG_ENABLE
+ if(if_brake == 0)
+ {
+    gpio_set (PTE3,1);//������ʼ����ת
+    gpio_set (PTI3,0);
+    gpio_set (PTE1,1);//����ҳ�ʼ����ת
+    gpio_set (PTG7,0);
   if(left_Spd_Set <= BB_DEAD_ZONE)
     FTM_PWM_Duty(CFTM2, FTM_CH3, BB_DUTY_MIN);
   else if(left_times < left_Spd_Set - BB_DEAD_ZONE)
@@ -309,6 +403,23 @@ void motor_Ctrl(uint16_t left_Spd_Set, uint16_t right_Spd_Set)
      FTM_PWM_Duty(CFTM2, FTM_CH4, BB_DUTY_MAX);
   else if(right_times > right_Spd_Set + BB_DEAD_ZONE)
      FTM_PWM_Duty(CFTM2, FTM_CH4, BB_DUTY_MIN);
+ }
+ else
+ {
+    gpio_set (PTE3,0);//������ʼ����ת
+    gpio_set (PTI3,1);
+    gpio_set (PTE1,0);//����ҳ�ʼ����ת
+    gpio_set (PTG7,1); 
+    if(left_times > BB_DEAD_ZONE)
+      FTM_PWM_Duty(CFTM2, FTM_CH3, BB_BRAKE_MAX);
+    else
+      FTM_PWM_Duty(CFTM2, FTM_CH3, BB_DUTY_MIN);
+    
+    if(right_times > BB_DEAD_ZONE)
+      FTM_PWM_Duty(CFTM2, FTM_CH4, BB_BRAKE_MAX);
+    else
+      FTM_PWM_Duty(CFTM2, FTM_CH4, BB_DUTY_MIN);
+ }
   
 #else
   FTM_PWM_Duty(CFTM2, FTM_CH3, left_Spd_Set);   //PWM2 PTB3

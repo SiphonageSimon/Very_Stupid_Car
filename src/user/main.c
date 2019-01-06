@@ -111,7 +111,11 @@ uint16_t leftSpd,rightSpd;
 void main(void)
 {
   DisableInterrupts ;
-  
+#if LOCK //保护车，锁死
+  while(1)
+  {
+  }
+#endif
   key_init();
   adc_init();
   motor_init();
@@ -124,6 +128,7 @@ void main(void)
   OLED_DrawString8X16(0,13,string0_1,OLED_COLOR_WHITE,OLED_FALSE,OLED_ANGLE_0,OLED_FALSE);
   OLED_BufferFlash();
 #endif
+  
   FTM_PWM_Duty(CFTM1, FTM_CH1, SteerMid);
   AD_value_init(); 
   encoder_init();

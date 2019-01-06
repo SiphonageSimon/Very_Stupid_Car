@@ -7,7 +7,7 @@
 #define TEST_ENCODER        0            //main中是否显示编码器测试值
 #define ADC_VAL_DSPLY       0            //isr1中是否显示电感数值
 #define LINEAR_TEST         1            //Ctrl中是否进入提线线性化测试
-
+#define LOCK                1            //锁死代码
 
 
 //adc采集参数

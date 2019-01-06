@@ -92,7 +92,7 @@ void PIT1_ISR(void)
     //*/
     //FSM_Ctrl();   //优雅，高级但是没写完
     get_spd();
-    simple_Ctrl();
+    simple_Ctrl2();
     /*/
     servo_Ctrl(); //舵机控制，包含提线
     //*/
